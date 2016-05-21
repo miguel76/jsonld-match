@@ -24,6 +24,7 @@
   "homepage": "https://github.com/miguel76/jsonld-match#readme",
   "dependencies": {
     "async": "^2.0.0-rc.5",
+    "highland": "^2.8.1",
     "jsonld": "^0.4.11",
     "lodash": "^4.12.0"
   },

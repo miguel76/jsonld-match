@@ -47,6 +47,14 @@ describe('Binding', function() {
   var unionZeroExt = bind.extend(union456__123_145, {});
   var unionZeroExtTwice = bind.extend(unionZeroExt, {});
   var unionExt = bind.extend(union456__123_145, binding6);
+  var unionExtTwice = bind.extend(unionExt, binding4);
+  var source0Ext = bind.extend(singleSource0, binding1);
+  var source0ExtTwice = bind.extend(source0Ext, binding4);
+
+  var emptyProj = bind.project(emptyUnionTwice, ['a', 'b', 'c']);
+  var emptyProjTwice = bind.project(emptyProj,  ['b', 'c', 'd']);
+  var unionProj1 = bind.project(union456__123_145, ['f', 'g']);
+  var unionProj2 = bind.project(union456__123_145, ['c', 'f', 'g', 'a']);
 
   describe('#singleSource()', function () {
     it('should produce a single binding (its parameter)', function () {
@@ -78,9 +86,28 @@ describe('Binding', function() {
       var res = readBindings(union123_145);
       expect(res).to.have.a.property('error').that.is.null;
       expect(res).to.have.a.property('bindings').that.has.lengthOf(6);
+      expect(res).to.have.a.property('bindings').that.is.deep.equal([
+        {a: 1, b: 2, c: 3},
+        {a: 11, c: 13, d: 14},
+        {a: 21, c: 33 },
+        {a: 1, b: 2, c: 3},
+        {c: 43, d: 44, e: 45},
+        {d: 53}
+      ]);
       res = readBindings(union456__123_145);
       expect(res).to.have.a.property('error').that.is.null;
       expect(res).to.have.a.property('bindings').that.has.lengthOf(9);
+      expect(res).to.have.a.property('bindings').that.is.deep.equal([
+        {c: 43, d: 44, e: 45},
+        {d: 53},
+        {a: 61, b: 61, c: 63, d: 63},
+        {a: 1, b: 2, c: 3},
+        {a: 11, c: 13, d: 14},
+        {a: 21, c: 33 },
+        {a: 1, b: 2, c: 3},
+        {c: 43, d: 44, e: 45},
+        {d: 53}
+      ]);
     });
   });
 
@@ -93,14 +120,70 @@ describe('Binding', function() {
     it('should be an identity if the new binding has no variables', function () {
       var base = readBindings(union456__123_145);
       var res = readBindings(unionZeroExt);
+      expect(res).to.have.a.property('error').that.is.null;
       expect(res).to.be.deep.equal(base);
       res = readBindings(unionZeroExtTwice);
+      expect(res).to.have.a.property('error').that.is.null;
       expect(res).to.be.deep.equal(base);
     });
+    it('should be always a single source when extending a compatible single source', function () {
+      var base = readBindings(singleSource1);
+      var res = readBindings(source0Ext);
+      expect(res).to.have.a.property('error').that.is.null;
+      expect(res).to.be.deep.equal(base);
+      res = readBindings(source0ExtTwice);
+      var test = [{a: 1, b: 2, c: 3, d: 44, e: 45}];
+      expect(res).to.have.a.property('error').that.is.null;
+      expect(res).to.have.a.property('bindings').that.is.deep.equal(test);
+    });
     it('should produce bindings only when the extension is compatible with the source', function () {
-      var base = readBindings(union456__123_145);
       var res = readBindings(unionExt);
+      expect(res).to.have.a.property('error').that.is.null;
       expect(res).to.have.a.property('bindings').that.has.lengthOf(4);
+      var test = [
+        {a: 61, b: 61, c: 63, d: 53},
+        {a: 61, b: 61, c: 63, d: 63},
+        {a: 21, b: 61, c: 33, d: 63},
+        {a: 61, b: 61, c: 63, d: 53}
+      ];
+      expect(res).to.have.a.property('bindings').that.is.deep.equal(test);
+      res = readBindings(unionExtTwice);
+      expect(res).to.have.a.property('error').that.is.null;
+      expect(res).to.have.a.property('bindings').that.has.lengthOf(0);
+    });
+  });
+
+  describe('#project()', function () {
+    it('should produce no bindings if an empty source is projected', function () {
+      var res = readBindings(emptyProj);
+      expect(res).to.have.a.property('error').that.is.null;
+      expect(res).to.have.a.property('bindings').that.has.lengthOf(0);
+      res = readBindings(emptyProjTwice);
+      expect(res).to.have.a.property('error').that.is.null;
+      expect(res).to.have.a.property('bindings').that.has.lengthOf(0);
+    });
+    it('should produce zero-vars bindings if the projected variables are not found', function (done) {
+      var res = readBindings(unionProj1);
+      expect(res).to.have.a.property('error').that.is.null;
+      var test = [{}, {}, {}, {}, {}, {}, {}, {}, {}];
+      expect(res).to.have.a.property('bindings').that.is.deep.equal(test);
+      done();
+    });
+    it('should produce bindings wiht only the projected variables found', function () {
+      var res = readBindings(unionProj2);
+      expect(res).to.have.a.property('error').that.is.null;
+      var test = [
+        {c: 43},
+        {},
+        {a: 61, c: 63},
+        {a: 1, c: 3},
+        {a: 11, c: 13},
+        {a: 21, c: 33 },
+        {a: 1, c: 3},
+        {c: 43},
+        {}
+      ];
+      expect(res).to.have.a.property('bindings').that.is.deep.equal(test);
     });
   });
 
